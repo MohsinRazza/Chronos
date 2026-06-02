@@ -43,6 +43,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isDark = false; // Default theme is Light!
+  String _themePreset = 'zinc';
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _MyAppState extends State<MyApp> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isDark = prefs.getBool('is_dark') ?? false;
+      _themePreset = prefs.getString('theme_preset') ?? 'zinc';
     });
   }
 
@@ -62,9 +64,14 @@ class _MyAppState extends State<MyApp> {
     await prefs.setBool('is_dark', value);
   }
 
+  Future<void> _saveThemePreset(String preset) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme_preset', preset);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final shadTheme = ShadTheme(isDark: _isDark);
+    final shadTheme = ShadTheme(isDark: _isDark, preset: _themePreset);
 
     return MaterialApp(
       title: 'Chronos',
@@ -79,6 +86,13 @@ class _MyAppState extends State<MyApp> {
           });
           _saveTheme(_isDark);
         },
+        themePreset: _themePreset,
+        onThemePresetChanged: (preset) {
+          setState(() {
+            _themePreset = preset;
+          });
+          _saveThemePreset(preset);
+        },
       ),
     );
   }
@@ -87,11 +101,15 @@ class _MyAppState extends State<MyApp> {
 class CalendarDashboard extends StatefulWidget {
   final bool isDark;
   final VoidCallback onToggleTheme;
+  final String themePreset;
+  final ValueChanged<String> onThemePresetChanged;
 
   const CalendarDashboard({
     super.key,
     required this.isDark,
     required this.onToggleTheme,
+    required this.themePreset,
+    required this.onThemePresetChanged,
   });
 
   @override
@@ -620,6 +638,8 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                   onNewEventPressed: () => _handleNewEventPressed(),
                   onToggleTheme: widget.onToggleTheme,
                   isDark: widget.isDark,
+                  themePreset: widget.themePreset,
+                  onThemePresetChanged: widget.onThemePresetChanged,
                   isGoogleAuthenticated: _googleService.isAuthenticated,
                   googleUserName: _googleService.userName,
                   googleUserPicture: _googleService.userPicture,

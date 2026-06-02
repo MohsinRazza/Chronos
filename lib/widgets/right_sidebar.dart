@@ -12,6 +12,8 @@ class CalendarRightSidebar extends StatefulWidget {
   final VoidCallback onNewEventPressed;
   final VoidCallback onToggleTheme;
   final bool isDark;
+  final String themePreset;
+  final ValueChanged<String> onThemePresetChanged;
 
   // Google authentication properties
   final bool isGoogleAuthenticated;
@@ -34,6 +36,8 @@ class CalendarRightSidebar extends StatefulWidget {
     required this.onNewEventPressed,
     required this.onToggleTheme,
     required this.isDark,
+    required this.themePreset,
+    required this.onThemePresetChanged,
     required this.isGoogleAuthenticated,
     required this.googleUserName,
     required this.googleUserPicture,
@@ -360,6 +364,32 @@ class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
             ),
           ),
 
+          const SizedBox(height: 20),
+          Divider(height: 1, color: shadTheme.border),
+          const SizedBox(height: 20),
+
+          // Themes Selection List
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Themes',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: shadTheme.mutedForeground,
+                    letterSpacing: 0.5,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildThemePresetSelector(context, shadTheme),
+              ],
+            ),
+          ),
+
 
         ],
       ),
@@ -445,5 +475,67 @@ class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
     final amPm = localDt.hour >= 12 ? 'PM' : 'AM';
 
     return '$month $day, $year at $hour:$minute $amPm';
+  }
+
+  Widget _buildThemePresetSelector(BuildContext context, ShadTheme shadTheme) {
+    final presets = [
+      {'id': 'zinc', 'name': 'Zinc', 'color': const Color(0xFF71717A)},
+      {'id': 'olive', 'name': 'Olive', 'color': const Color(0xFF3F6212)},
+      {'id': 'sky', 'name': 'Sky', 'color': const Color(0xFF0284C7)},
+      {'id': 'cyan', 'name': 'Cyan', 'color': const Color(0xFF0891B2)},
+    ];
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: presets.map((preset) {
+        final id = preset['id'] as String;
+        final name = preset['name'] as String;
+        final color = preset['color'] as Color;
+        final isSelected = widget.themePreset == id;
+
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => widget.onThemePresetChanged(id),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? shadTheme.secondary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? shadTheme.primary : shadTheme.border,
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected ? shadTheme.foreground : shadTheme.mutedForeground,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
