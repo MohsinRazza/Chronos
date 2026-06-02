@@ -33,11 +33,12 @@ class CalendarSidebar extends StatelessWidget {
   }
 
   List<CalendarEvent> _getUpcomingEvents() {
-    final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     
     return allEvents.where((e) {
       final eventDateOnly = DateTime(e.date.year, e.date.month, e.date.day);
-      return eventDateOnly.isAfter(selectedDateOnly);
+      return !eventDateOnly.isBefore(today);
     }).toList()
       ..sort((a, b) {
         final dateCompare = a.date.compareTo(b.date);

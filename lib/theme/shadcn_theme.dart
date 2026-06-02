@@ -98,7 +98,7 @@ class ShadTheme {
         backgroundColor: popover,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
         insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
