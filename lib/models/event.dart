@@ -131,7 +131,7 @@ class CalendarEvent {
       CalendarEvent(
         id: '7',
         title: 'Code Refactoring Session',
-        description: 'Apply Shadcn styles to custom buttons and popovers.',
+        description: 'Apply Chronos styles to custom buttons and popovers.',
         date: today.add(const Duration(days: 2)),
         startTime: const TimeOfDay(hour: 10, minute: 0),
         endTime: const TimeOfDay(hour: 12, minute: 0),

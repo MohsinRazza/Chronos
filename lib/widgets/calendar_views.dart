@@ -81,7 +81,8 @@ class CalendarWorkspace extends StatelessWidget {
 
   Widget _buildToolbar(BuildContext context, ShadTheme shadTheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      height: 68.0,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: shadTheme.border, width: 1)),
       ),
@@ -287,14 +288,16 @@ class _MonthGridView extends StatelessWidget {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final cellWidth = constraints.maxWidth / 7;
               final cellHeight = constraints.maxHeight / 6;
+              final aspectRatio = cellWidth / cellHeight;
 
               return GridView.builder(
                 padding: EdgeInsets.zero,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 7,
-                  childAspectRatio: 1.15, // Desktop widescreen balance
+                  childAspectRatio: aspectRatio,
                 ),
                 itemCount: 42,
                 itemBuilder: (context, index) {

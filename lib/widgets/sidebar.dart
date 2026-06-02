@@ -65,64 +65,46 @@ class CalendarSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // App Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          // Header Section aligned with central workspace
+          Container(
+            height: 68.0,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: shadTheme.border, width: 1)),
+            ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  color: shadTheme.foreground,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
                 Text(
-                  'Shad Calendar',
+                  'AGENDA',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: shadTheme.foreground,
+                    letterSpacing: 0.5,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+                Text(
+                  '${_formatFullMonth(selectedDate.month)} ${selectedDate.day}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: shadTheme.mutedForeground,
                     fontFamily: 'Inter',
                   ),
                 ),
               ],
             ),
           ),
-          
-          Divider(height: 1, color: shadTheme.border),
 
           // SECTION 1: Agenda of Selected Day
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'AGENDA',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: shadTheme.mutedForeground,
-                          letterSpacing: 0.5,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      Text(
-                        '${_formatFullMonth(selectedDate.month)} ${selectedDate.day}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: shadTheme.mutedForeground,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   Expanded(
                     child: eventsForSelectedDate.isEmpty
                         ? Center(

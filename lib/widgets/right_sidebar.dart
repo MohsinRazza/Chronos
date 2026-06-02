@@ -38,19 +38,29 @@ class CalendarRightSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Search & Tools Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-            child: Text(
-              'Search & Filter',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: shadTheme.foreground,
-                fontFamily: 'Inter',
+          // Search & Tools Title Header Section
+          Container(
+            height: 68.0,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: shadTheme.border, width: 1)),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Search & Filter',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: shadTheme.foreground,
+                  letterSpacing: 0.5,
+                  fontFamily: 'Inter',
+                ),
               ),
             ),
           ),
+
+          const SizedBox(height: 16),
 
           // Search Field
           Padding(
@@ -62,9 +72,9 @@ class CalendarRightSidebar extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Divider(height: 1, color: shadTheme.border),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Actions
           Padding(
