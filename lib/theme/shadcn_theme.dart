@@ -88,12 +88,18 @@ class ShadTheme {
       scaffoldBackgroundColor: background,
       cardColor: card,
       dividerColor: border,
+      dividerTheme: DividerThemeData(
+        color: border,
+        thickness: 1,
+        space: 1,
+      ),
       dialogBackgroundColor: popover,
       dialogTheme: DialogThemeData(
         backgroundColor: popover,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: border, width: 1),
