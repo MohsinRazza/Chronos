@@ -64,46 +64,59 @@ class CalendarRightSidebar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 if (isGoogleAuthenticated) ...[
-                  // Sync/Refresh Button
-                  Tooltip(
-                    message: 'Refresh Google Calendar',
-                    child: ShadButton.icon(
-                      onPressed: onGoogleRefresh,
-                      variant: ShadButtonVariant.ghost,
-                      icon: Icons.sync,
-                      iconSize: 18,
-                      child: const Text('Refresh'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Google Avatar Button
+                  // Google User Chip
                   Tooltip(
                     message: 'Connected as ${googleUserName ?? "Google User"}\nClick to Sign Out',
                     child: GestureDetector(
                       onTap: onGoogleLogout,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: shadTheme.border, width: 1.5),
-                        ),
-                        child: ClipOval(
-                          child: googleUserPicture != null && googleUserPicture!.isNotEmpty
-                              ? Image.network(
-                                  googleUserPicture!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Icon(
-                                    Icons.person,
-                                    size: 16,
-                                    color: shadTheme.foreground,
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.person,
-                                  size: 16,
-                                  color: shadTheme.foreground,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: shadTheme.border, width: 1),
+                            borderRadius: BorderRadius.circular(6),
+                            color: shadTheme.background,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
                                 ),
+                                child: ClipOval(
+                                  child: googleUserPicture != null && googleUserPicture!.isNotEmpty
+                                      ? Image.network(
+                                          googleUserPicture!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => Icon(
+                                            Icons.person,
+                                            size: 12,
+                                            color: shadTheme.foreground,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.person,
+                                          size: 12,
+                                          color: shadTheme.foreground,
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                googleUserName?.split(' ').first ?? 'Connected',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: shadTheme.foreground,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -112,12 +125,34 @@ class CalendarRightSidebar extends StatelessWidget {
                   // Connect Google Account Button
                   Tooltip(
                     message: 'Connect Google Account',
-                    child: ShadButton.icon(
+                    child: ShadButton.outline(
                       onPressed: onGoogleLogin,
-                      variant: ShadButtonVariant.outline,
-                      icon: Icons.login_outlined,
-                      iconSize: 18,
-                      child: const Text('Connect Google'),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/images/Google_logo.png',
+                            width: 18,
+                            height: 18,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.login_outlined,
+                              size: 18,
+                              color: shadTheme.foreground,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Google Sync',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -170,6 +205,15 @@ class CalendarRightSidebar extends StatelessWidget {
               onPressed: onNewEventPressed,
               icon: Icons.add,
               child: const Text('Add Event'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: ShadButton.secondary(
+              onPressed: isGoogleAuthenticated ? onGoogleRefresh : onGoogleLogin,
+              icon: Icons.sync,
+              child: Text(isGoogleAuthenticated ? 'Sync Calendar' : 'Connect Calendar'),
             ),
           ),
 

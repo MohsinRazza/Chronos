@@ -117,12 +117,14 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     _searchKeyword = '';
 
     // Bind Google Auth state listener
-    _googleService.onStateChanged = () {
+    _googleService.onStateChanged = () async {
       if (mounted) {
         setState(() {});
         if (_googleService.isAuthenticated) {
           _fetchGoogleEvents();
         } else {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('cached_google_events');
           setState(() {
             _googleEvents = [];
           });
@@ -142,13 +144,14 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
           _googleEvents = gEvents;
         });
       }
+      await _saveCachedGoogleEvents();
     } catch (e) {
       debugPrint('Error fetching Google events: $e');
       if (mounted) {
         ShadToast.show(
           context,
           title: 'Sync Failed',
-          description: 'Could not fetch events. Please ensure "Google Calendar API" is enabled in your Google Cloud Console.',
+          description: 'Could not fetch events. Please check your internet connection.',
           isDestructive: true,
         );
       }
@@ -157,6 +160,8 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
 
   Future<void> _loadEvents() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // Load local events
     final String? eventsJson = prefs.getString('calendar_events');
     if (eventsJson != null) {
       try {
@@ -178,12 +183,33 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
       });
       _saveEvents();
     }
+
+    // Load cached Google events
+    final String? cachedGoogleJson = prefs.getString('cached_google_events');
+    if (cachedGoogleJson != null) {
+      try {
+        final List<dynamic> decodedGoogle = json.decode(cachedGoogleJson);
+        setState(() {
+          _googleEvents = decodedGoogle
+              .map((item) => CalendarEvent.fromJson(item as Map<String, dynamic>))
+              .toList();
+        });
+      } catch (e) {
+        debugPrint('Error loading cached Google events: $e');
+      }
+    }
   }
 
   Future<void> _saveEvents() async {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = json.encode(_events.map((e) => e.toJson()).toList());
     await prefs.setString('calendar_events', encoded);
+  }
+
+  Future<void> _saveCachedGoogleEvents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = json.encode(_googleEvents.map((e) => e.toJson()).toList());
+    await prefs.setString('cached_google_events', encoded);
   }
 
   // Filter events based on active category checkboxes and search bar queries
@@ -331,6 +357,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
           setState(() {
             _googleEvents.add(syncedEvent);
           });
+          await _saveCachedGoogleEvents();
           ShadToast.show(
             context,
             title: 'Google Event Added',
@@ -392,6 +419,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                 _googleEvents[index] = syncedEvent;
               }
             });
+            await _saveCachedGoogleEvents();
             ShadToast.show(
               context,
               title: 'Google Event Updated',
@@ -436,6 +464,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
             setState(() {
               _googleEvents.removeWhere((e) => e.id == id);
             });
+            await _saveCachedGoogleEvents();
             ShadToast.show(
               context,
               title: 'Google Event Deleted',

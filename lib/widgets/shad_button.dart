@@ -134,7 +134,7 @@ class _ShadButtonState extends State<ShadButton> {
         break;
       case ShadButtonVariant.outline:
         backgroundColor = isEnabled
-            ? (_isHovered ? shadTheme.accent : Colors.transparent)
+            ? (_isHovered ? (shadTheme.isDark ? const Color(0xFF2E2E33) : const Color(0xFFE4E4E7)) : Colors.transparent)
             : Colors.transparent;
         foregroundColor = isEnabled
             ? (_isHovered ? shadTheme.accentForeground : shadTheme.foreground)
@@ -143,7 +143,7 @@ class _ShadButtonState extends State<ShadButton> {
         break;
       case ShadButtonVariant.ghost:
         backgroundColor = isEnabled
-            ? (_isHovered ? shadTheme.accent : Colors.transparent)
+            ? (_isHovered ? (shadTheme.isDark ? const Color(0xFF2E2E33) : const Color(0xFFE4E4E7)) : Colors.transparent)
             : Colors.transparent;
         foregroundColor = isEnabled
             ? (_isHovered ? shadTheme.accentForeground : shadTheme.foreground)
@@ -188,6 +188,7 @@ class _ShadButtonState extends State<ShadButton> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),

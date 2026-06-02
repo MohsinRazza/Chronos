@@ -74,6 +74,10 @@ class GoogleCalendarService {
       // Save credentials for future launches
       await _saveCredentials(client.credentials);
 
+      // Save login session timestamp (15 days check)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('google_login_time', DateTime.now().toIso8601String());
+
       if (onStateChanged != null) onStateChanged!();
       return true;
     } catch (e) {
@@ -95,6 +99,7 @@ class GoogleCalendarService {
     await prefs.remove('google_user_email');
     await prefs.remove('google_user_name');
     await prefs.remove('google_user_picture');
+    await prefs.remove('google_login_time');
 
     if (onStateChanged != null) onStateChanged!();
   }
@@ -106,6 +111,22 @@ class GoogleCalendarService {
 
     if (GoogleOAuthConfig.clientId.isEmpty) {
       return;
+    }
+
+    // Check 15-day session expiration
+    final loginTimeStr = prefs.getString('google_login_time');
+    if (loginTimeStr != null) {
+      try {
+        final loginTime = DateTime.parse(loginTimeStr);
+        final difference = DateTime.now().difference(loginTime);
+        if (difference.inDays >= 15) {
+          debugPrint('Google session expired (older than 15 days). Logging out.');
+          await logout();
+          return;
+        }
+      } catch (e) {
+        debugPrint('Error parsing google_login_time: $e');
+      }
     }
 
     try {
