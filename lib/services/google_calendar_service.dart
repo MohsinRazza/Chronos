@@ -274,6 +274,8 @@ class GoogleCalendarService {
 
     DateTime startDateTime;
     DateTime endDateTime;
+    final isAllDay = gEvent.start?.dateTime == null && gEvent.start?.date != null;
+
     if (gEvent.start?.dateTime != null) {
       startDateTime = gEvent.start!.dateTime!.toLocal();
     } else if (gEvent.start?.date != null) {
@@ -295,8 +297,9 @@ class GoogleCalendarService {
       title: gEvent.summary ?? 'Untitled Event',
       description: description,
       date: DateTime(startDateTime.year, startDateTime.month, startDateTime.day),
-      startTime: TimeOfDay(hour: startDateTime.hour, minute: startDateTime.minute),
-      endTime: TimeOfDay(hour: endDateTime.hour, minute: endDateTime.minute),
+      startTime: isAllDay ? const TimeOfDay(hour: 0, minute: 0) : TimeOfDay(hour: startDateTime.hour, minute: startDateTime.minute),
+      endTime: isAllDay ? const TimeOfDay(hour: 23, minute: 59) : TimeOfDay(hour: endDateTime.hour, minute: endDateTime.minute),
+      isAllDay: isAllDay,
       category: category,
       color: local.CalendarEvent.getColorForCategory(category),
     );
@@ -324,7 +327,11 @@ class GoogleCalendarService {
       ..id = (cleanId.contains('-') || cleanId.length < 5) ? null : cleanId
       ..summary = lEvent.title
       ..description = '[Chronos Category: ${lEvent.category}]\n${lEvent.description}'
-      ..start = (EventDateTime()..dateTime = startDateTime)
-      ..end = (EventDateTime()..dateTime = endDateTime);
+      ..start = lEvent.isAllDay
+          ? (EventDateTime()..date = lEvent.date)
+          : (EventDateTime()..dateTime = startDateTime)
+      ..end = lEvent.isAllDay
+          ? (EventDateTime()..date = lEvent.date.add(const Duration(days: 1)))
+          : (EventDateTime()..dateTime = endDateTime);
   }
 }

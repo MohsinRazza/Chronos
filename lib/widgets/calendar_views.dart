@@ -455,9 +455,11 @@ class _MonthGridCellState extends State<_MonthGridCell> {
                             onTap: () {
                               widget.onEventTap(event);
                             },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            child: Opacity(
+                              opacity: event.hasPassed ? 0.55 : 1.0,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                               decoration: BoxDecoration(
                                 color: event.color.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(4),
@@ -479,7 +481,8 @@ class _MonthGridCellState extends State<_MonthGridCell> {
                             ),
                           ),
                         ),
-                      );
+                      ),
+                    );
                     }).toList(),
                   ),
                 ),
@@ -629,7 +632,9 @@ class _WeekScheduleView extends StatelessWidget {
                             cursor: SystemMouseCursors.click,
                             child: GestureDetector(
                               onTap: () => onEventSelected(event),
-                              child: Container(
+                              child: Opacity(
+                                opacity: event.hasPassed ? 0.55 : 1.0,
+                                child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: event.color.withOpacity(0.08),
@@ -664,14 +669,14 @@ class _WeekScheduleView extends StatelessWidget {
                                     Row(
                                       children: [
                                         Icon(
-                                          Icons.access_time_rounded,
+                                          event.isAllDay ? Icons.calendar_today_rounded : Icons.access_time_rounded,
                                           size: 10,
                                           color: event.color.withOpacity(0.8),
                                         ),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            event.startTime.format(context),
+                                            event.isAllDay ? 'All Day' : event.startTime.format(context),
                                             style: TextStyle(
                                               fontSize: 10,
                                               color: event.color.withOpacity(0.8),
@@ -687,7 +692,8 @@ class _WeekScheduleView extends StatelessWidget {
                               ),
                             ),
                           ),
-                        );
+                        ),
+                      );
                       },
                     ),
                   ),
@@ -785,7 +791,9 @@ class _DayScheduleView extends StatelessWidget {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: () => onEventSelected(event),
-                          child: Container(
+                          child: Opacity(
+                            opacity: event.hasPassed ? 0.55 : 1.0,
+                            child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: shadTheme.accent.withOpacity(0.3),
@@ -803,7 +811,7 @@ class _DayScheduleView extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        event.startTime.format(context),
+                                        event.isAllDay ? 'All Day' : event.startTime.format(context),
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -811,15 +819,17 @@ class _DayScheduleView extends StatelessWidget {
                                           fontFamily: 'Poppins',
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        event.endTime.format(context),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: shadTheme.mutedForeground,
-                                          fontFamily: 'Poppins',
+                                      if (!event.isAllDay) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          event.endTime.format(context),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: shadTheme.mutedForeground,
+                                            fontFamily: 'Poppins',
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -847,6 +857,7 @@ class _DayScheduleView extends StatelessWidget {
                                               fontWeight: FontWeight.w600,
                                               color: shadTheme.foreground,
                                               fontFamily: 'Poppins',
+                                              decoration: event.hasPassed ? TextDecoration.lineThrough : null,
                                             ),
                                           ),
                                           const SizedBox(width: 8),
@@ -866,6 +877,45 @@ class _DayScheduleView extends StatelessWidget {
                                               ),
                                             ),
                                           ),
+                                          if (event.isActive) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4), width: 1),
+                                              ),
+                                              child: const Text(
+                                                'NOW',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF10B981),
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                            ),
+                                          ] else if (event.hasPassed) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: shadTheme.muted.withOpacity(0.4),
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(color: shadTheme.border, width: 1),
+                                              ),
+                                              child: Text(
+                                                'PASSED',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: shadTheme.mutedForeground,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                       const SizedBox(height: 6),
@@ -887,7 +937,8 @@ class _DayScheduleView extends StatelessWidget {
                           ),
                         ),
                       ),
-                    );
+                    ),
+                  );
                   }).toList(),
               ],
             ),

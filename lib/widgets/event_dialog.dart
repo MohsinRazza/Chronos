@@ -51,6 +51,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
   late DateTime _selectedDate;
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
+  late bool _isAllDay;
   late String _selectedCategory;
   late bool _syncToGoogle;
 
@@ -66,6 +67,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
     _selectedDate = event?.date ?? widget.initialDate;
     _startTime = event?.startTime ?? const TimeOfDay(hour: 9, minute: 0);
     _endTime = event?.endTime ?? const TimeOfDay(hour: 10, minute: 0);
+    _isAllDay = event?.isAllDay ?? false;
     _selectedCategory = event?.category ?? 'Work';
     _syncToGoogle = event?.id.startsWith('google_') ?? widget.isGoogleAuthenticated;
   }
@@ -156,16 +158,18 @@ class _EventFormDialogState extends State<EventFormDialog> {
       return;
     }
 
-    final startMinutes = _startTime.hour * 60 + _startTime.minute;
-    final endMinutes = _endTime.hour * 60 + _endTime.minute;
-    if (endMinutes <= startMinutes) {
-      ShadToast.show(
-        context,
-        title: 'Invalid Event Duration',
-        description: 'End time must be set after the start time.',
-        isDestructive: true,
-      );
-      return;
+    if (!_isAllDay) {
+      final startMinutes = _startTime.hour * 60 + _startTime.minute;
+      final endMinutes = _endTime.hour * 60 + _endTime.minute;
+      if (endMinutes <= startMinutes) {
+        ShadToast.show(
+          context,
+          title: 'Invalid Event Duration',
+          description: 'End time must be set after the start time.',
+          isDestructive: true,
+        );
+        return;
+      }
     }
 
     Navigator.of(context).pop({
@@ -176,8 +180,9 @@ class _EventFormDialogState extends State<EventFormDialog> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         date: _selectedDate,
-        startTime: _startTime,
-        endTime: _endTime,
+        startTime: _isAllDay ? const TimeOfDay(hour: 0, minute: 0) : _startTime,
+        endTime: _isAllDay ? const TimeOfDay(hour: 23, minute: 59) : _endTime,
+        isAllDay: _isAllDay,
         category: _selectedCategory,
         color: CalendarEvent.getColorForCategory(_selectedCategory),
       ),
@@ -223,6 +228,36 @@ class _EventFormDialogState extends State<EventFormDialog> {
             placeholder: 'Provide optional details about the meeting...',
             maxLines: 3,
           ),
+          const SizedBox(height: 12),
+
+          // All Day Checkbox
+          Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: _isAllDay,
+                  activeColor: shadTheme.primary,
+                  onChanged: (val) {
+                    setState(() {
+                      _isAllDay = val ?? false;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'All Day Event',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: shadTheme.foreground,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Date & Time Picker Group
@@ -252,56 +287,58 @@ class _EventFormDialogState extends State<EventFormDialog> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Start Time',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: shadTheme.foreground,
-                        fontFamily: 'Poppins',
+              if (!_isAllDay) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Start Time',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: shadTheme.foreground,
+                          fontFamily: 'Poppins',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    ShadButton.outline(
-                      onPressed: _pickStartTime,
-                      width: double.infinity,
-                      icon: Icons.access_time_rounded,
-                      child: Text(_startTime.format(context)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'End Time',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: shadTheme.foreground,
-                        fontFamily: 'Poppins',
+                      const SizedBox(height: 6),
+                      ShadButton.outline(
+                        onPressed: _pickStartTime,
+                        width: double.infinity,
+                        icon: Icons.access_time_rounded,
+                        child: Text(_startTime.format(context)),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    ShadButton.outline(
-                      onPressed: _pickEndTime,
-                      width: double.infinity,
-                      icon: Icons.access_time_rounded,
-                      child: Text(_endTime.format(context)),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'End Time',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: shadTheme.foreground,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      ShadButton.outline(
+                        onPressed: _pickEndTime,
+                        width: double.infinity,
+                        icon: Icons.access_time_rounded,
+                        child: Text(_endTime.format(context)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 20),

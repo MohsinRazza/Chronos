@@ -33,13 +33,7 @@ class CalendarSidebar extends StatelessWidget {
   }
 
   List<CalendarEvent> _getUpcomingEvents() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    
-    return allEvents.where((e) {
-      final eventDateOnly = DateTime(e.date.year, e.date.month, e.date.day);
-      return !eventDateOnly.isBefore(today);
-    }).toList()
+    return allEvents.where((e) => !e.hasPassed).toList()
       ..sort((a, b) {
         final dateCompare = a.date.compareTo(b.date);
         if (dateCompare != 0) return dateCompare;
@@ -99,108 +93,143 @@ class CalendarSidebar extends StatelessWidget {
           ),
 
           // SECTION 1: Agenda of Selected Day
-          Flexible(
-            fit: FlexFit.loose,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: eventsForSelectedDate.isEmpty
-                        ? SizedBox(
-                            height: 100,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_outlined,
-                                  size: 24,
-                                  color: shadTheme.mutedForeground.withOpacity(0.4),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'No events for this day',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: shadTheme.mutedForeground,
-                                    fontStyle: FontStyle.italic,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
+              child: eventsForSelectedDate.isEmpty
+                  ? SizedBox(
+                      height: 100,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 24,
+                            color: shadTheme.mutedForeground.withOpacity(0.4),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No events for this day',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: shadTheme.mutedForeground,
+                              fontStyle: FontStyle.italic,
+                              fontFamily: 'Poppins',
                             ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: eventsForSelectedDate.length,
-                            itemBuilder: (context, index) {
-                              final event = eventsForSelectedDate[index];
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () => onEventSelected(event),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: shadTheme.accent.withOpacity(0.4),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: shadTheme.border, width: 1),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: BoxDecoration(
-                                                  color: event.color,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  event.title,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: shadTheme.foreground,
-                                                    fontFamily: 'Poppins',
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: eventsForSelectedDate.length,
+                      itemBuilder: (context, index) {
+                        final event = eventsForSelectedDate[index];
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => onEventSelected(event),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: event.hasPassed
+                                      ? shadTheme.muted.withOpacity(0.2)
+                                      : shadTheme.accent.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: shadTheme.border, width: 1),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: event.hasPassed ? event.color.withOpacity(0.4) : event.color,
+                                            shape: BoxShape.circle,
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${event.startTime.format(context)} - ${event.endTime.format(context)}',
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            event.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              fontSize: 11,
-                                              color: shadTheme.mutedForeground,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: event.hasPassed
+                                                  ? shadTheme.mutedForeground
+                                                  : shadTheme.foreground,
+                                              decoration: event.hasPassed ? TextDecoration.lineThrough : null,
                                               fontFamily: 'Poppins',
                                             ),
                                           ),
+                                        ),
+                                        if (event.isActive) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF10B981).withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4), width: 1),
+                                            ),
+                                            child: const Text(
+                                              'NOW',
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF10B981),
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                          ),
+                                        ] else if (event.hasPassed) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: shadTheme.muted.withOpacity(0.4),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: shadTheme.border, width: 1),
+                                            ),
+                                            child: Text(
+                                              'PASSED',
+                                              style: TextStyle(
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w600,
+                                                color: shadTheme.mutedForeground,
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                          ),
                                         ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      event.isAllDay ? 'All Day' : '${event.startTime.format(context)} - ${event.endTime.format(context)}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: shadTheme.mutedForeground,
+                                        fontFamily: 'Poppins',
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
-                  ),
-                ],
-              ),
+                        );
+                      },
+                    ),
             ),
           ),
 
@@ -333,20 +362,48 @@ class CalendarSidebar extends StatelessWidget {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(
-                                                    event.title,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: shadTheme.foreground,
-                                                      fontFamily: 'Poppins',
-                                                    ),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          event.title,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: shadTheme.foreground,
+                                                            fontFamily: 'Poppins',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      if (event.isActive) ...[
+                                                        const SizedBox(width: 6),
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xFF10B981).withOpacity(0.2),
+                                                            borderRadius: BorderRadius.circular(4),
+                                                            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4), width: 1),
+                                                          ),
+                                                          child: const Text(
+                                                            'NOW',
+                                                            style: TextStyle(
+                                                              fontSize: 8,
+                                                              fontWeight: FontWeight.w700,
+                                                              color: Color(0xFF10B981),
+                                                              fontFamily: 'Poppins',
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ],
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
-                                                    '${event.startTime.format(context)} - ${event.category}',
+                                                    event.isAllDay 
+                                                        ? 'All Day - ${event.category}'
+                                                        : '${event.startTime.format(context)} - ${event.category}',
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       color: shadTheme.mutedForeground,

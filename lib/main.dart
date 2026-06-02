@@ -130,6 +130,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
   DateTime? _lastSyncTime;
   DateTime? _googleLoginTime;
   Timer? _connectivityTimer;
+  DateTime? _lastTodayDate;
 
   @override
   void initState() {
@@ -168,9 +169,21 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     _loadEvents();
     _googleService.initialize();
     _checkConnectivity();
+    _lastTodayDate = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     _connectivityTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _checkConnectivity();
       if (mounted) {
+        final now = DateTime.now();
+        final todayDate = DateTime(now.year, now.month, now.day);
+        
+        if (_lastTodayDate != null && !_isSameDay(_lastTodayDate!, todayDate)) {
+          if (_isSameDay(_selectedDate, _lastTodayDate!)) {
+            setState(() {
+              _selectedDate = todayDate;
+            });
+          }
+        }
+        _lastTodayDate = todayDate;
         setState(() {});
       }
     });
@@ -599,6 +612,10 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     setState(() {
       _selectedDate = date;
     });
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   @override
