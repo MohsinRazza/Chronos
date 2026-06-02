@@ -4,10 +4,12 @@ import 'package:window_manager/window_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/shadcn_theme.dart';
 import 'models/event.dart';
+import 'services/google_calendar_service.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/right_sidebar.dart';
 import 'widgets/calendar_views.dart';
 import 'widgets/event_dialog.dart';
+import 'widgets/shad_toast.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +103,10 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
   late Set<String> _activeCategories;
   late String _searchKeyword;
 
+  // Google Calendar Integration
+  final GoogleCalendarService _googleService = GoogleCalendarService();
+  List<CalendarEvent> _googleEvents = [];
+
   @override
   void initState() {
     super.initState();
@@ -109,7 +115,44 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     _events = [];
     _activeCategories = {'Work', 'Personal', 'Health', 'Education', 'Finance', 'Travel'};
     _searchKeyword = '';
+
+    // Bind Google Auth state listener
+    _googleService.onStateChanged = () {
+      if (mounted) {
+        setState(() {});
+        if (_googleService.isAuthenticated) {
+          _fetchGoogleEvents();
+        } else {
+          setState(() {
+            _googleEvents = [];
+          });
+        }
+      }
+    };
+
     _loadEvents();
+    _googleService.initialize();
+  }
+
+  Future<void> _fetchGoogleEvents() async {
+    try {
+      final gEvents = await _googleService.fetchGoogleEvents();
+      if (mounted) {
+        setState(() {
+          _googleEvents = gEvents;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching Google events: $e');
+      if (mounted) {
+        ShadToast.show(
+          context,
+          title: 'Sync Failed',
+          description: 'Could not fetch events. Please ensure "Google Calendar API" is enabled in your Google Cloud Console.',
+          isDestructive: true,
+        );
+      }
+    }
   }
 
   Future<void> _loadEvents() async {
@@ -145,7 +188,8 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
 
   // Filter events based on active category checkboxes and search bar queries
   List<CalendarEvent> get _filteredEvents {
-    return _events.where((event) {
+    final allEvents = [..._events, ..._googleEvents];
+    return allEvents.where((event) {
       final matchesCategory = _activeCategories.contains(event.category);
       final matchesSearch = _searchKeyword.isEmpty ||
           event.title.toLowerCase().contains(_searchKeyword.toLowerCase()) ||
@@ -184,25 +228,139 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     });
   }
 
+  // Google OAuth Handlers
+  Future<void> _handleGoogleLogin() async {
+    final success = await _googleService.login();
+    if (success) {
+      ShadToast.show(
+        context,
+        title: 'Google Connected',
+        description: 'Successfully authenticated as ${_googleService.userEmail}.',
+        icon: Icons.check_circle_outline,
+      );
+    } else {
+      ShadToast.show(
+        context,
+        title: 'Connection Failed',
+        description: 'Google Sign-In failed or was cancelled.',
+        isDestructive: true,
+      );
+    }
+  }
+
+  Future<void> _handleGoogleLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final shadTheme = ShadTheme.of(context);
+        return AlertDialog(
+          backgroundColor: shadTheme.background,
+          title: Text(
+            'Disconnect Google Account',
+            style: TextStyle(color: shadTheme.foreground),
+          ),
+          content: Text(
+            'Are you sure you want to sign out of ${_googleService.userEmail}?',
+            style: TextStyle(color: shadTheme.mutedForeground),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Disconnect',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await _googleService.logout();
+      ShadToast.show(
+        context,
+        title: 'Google Disconnected',
+        description: 'You have signed out of your Google Account.',
+        icon: Icons.info_outline,
+      );
+    }
+  }
+
+  Future<void> _handleGoogleRefresh() async {
+    ShadToast.show(
+      context,
+      title: 'Syncing Calendar',
+      description: 'Fetching events from Google Calendar...',
+      icon: Icons.sync,
+    );
+    await _fetchGoogleEvents();
+    ShadToast.show(
+      context,
+      title: 'Sync Completed',
+      description: 'Google Calendar events are now up to date.',
+      icon: Icons.check_circle_outline,
+    );
+  }
+
   // Create new event handler
   Future<void> _handleNewEventPressed([DateTime? targetDate]) async {
     final result = await EventFormDialog.show(
       context: context,
       initialDate: targetDate ?? _selectedDate,
+      isGoogleAuthenticated: _googleService.isAuthenticated,
     );
 
     if (result != null && result['action'] == 'save') {
-      setState(() {
-        _events.add(result['event'] as CalendarEvent);
-      });
-      _saveEvents();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event added successfully!'),
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final CalendarEvent event = result['event'] as CalendarEvent;
+      final syncToGoogle = result['syncToGoogle'] as bool? ?? false;
+
+      if (syncToGoogle) {
+        ShadToast.show(
+          context,
+          title: 'Syncing Event',
+          description: 'Adding event to Google Calendar...',
+          icon: Icons.cloud_upload_outlined,
+        );
+        final syncedEvent = await _googleService.pushEvent(event);
+        if (syncedEvent != null) {
+          setState(() {
+            _googleEvents.add(syncedEvent);
+          });
+          ShadToast.show(
+            context,
+            title: 'Google Event Added',
+            description: '"${event.title}" has been synced to Google Calendar.',
+            icon: Icons.check_circle_outline,
+          );
+        } else {
+          setState(() {
+            _events.add(event);
+          });
+          _saveEvents();
+          ShadToast.show(
+            context,
+            title: 'Sync Failed',
+            description: 'Failed to sync with Google. Saved to Local Calendar.',
+            isDestructive: true,
+          );
+        }
+      } else {
+        setState(() {
+          _events.add(event);
+        });
+        _saveEvents();
+        ShadToast.show(
+          context,
+          title: 'Event Created',
+          description: '"${event.title}" saved to local calendar.',
+          icon: Icons.check_circle_outline,
+        );
+      }
     }
   }
 
@@ -212,38 +370,98 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
       context: context,
       initialEvent: event,
       initialDate: event.date,
+      isGoogleAuthenticated: _googleService.isAuthenticated,
     );
 
     if (result != null) {
       if (result['action'] == 'save') {
         final updatedEvent = result['event'] as CalendarEvent;
-        setState(() {
-          final index = _events.indexWhere((e) => e.id == updatedEvent.id);
-          if (index != -1) {
-            _events[index] = updatedEvent;
+
+        if (updatedEvent.id.startsWith('google_')) {
+          ShadToast.show(
+            context,
+            title: 'Updating Event',
+            description: 'Pushing updates to Google Calendar...',
+            icon: Icons.cloud_upload_outlined,
+          );
+          final syncedEvent = await _googleService.pushEvent(updatedEvent);
+          if (syncedEvent != null) {
+            setState(() {
+              final index = _googleEvents.indexWhere((e) => e.id == updatedEvent.id);
+              if (index != -1) {
+                _googleEvents[index] = syncedEvent;
+              }
+            });
+            ShadToast.show(
+              context,
+              title: 'Google Event Updated',
+              description: '"${updatedEvent.title}" has been updated on Google Calendar.',
+              icon: Icons.check_circle_outline,
+            );
+          } else {
+            ShadToast.show(
+              context,
+              title: 'Update Failed',
+              description: 'Failed to update event on Google Calendar.',
+              isDestructive: true,
+            );
           }
-        });
-        _saveEvents();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event updated successfully!'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        } else {
+          setState(() {
+            final index = _events.indexWhere((e) => e.id == updatedEvent.id);
+            if (index != -1) {
+              _events[index] = updatedEvent;
+            }
+          });
+          _saveEvents();
+          ShadToast.show(
+            context,
+            title: 'Event Updated',
+            description: '"${updatedEvent.title}" updated locally.',
+            icon: Icons.check_circle_outline,
+          );
+        }
       } else if (result['action'] == 'delete') {
         final id = result['id'] as String;
-        setState(() {
-          _events.removeWhere((e) => e.id == id);
-        });
-        _saveEvents();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event deleted.'),
-            duration: Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+
+        if (id.startsWith('google_')) {
+          ShadToast.show(
+            context,
+            title: 'Deleting Event',
+            description: 'Removing event from Google Calendar...',
+            icon: Icons.delete_outline,
+          );
+          final success = await _googleService.deleteEvent(id);
+          if (success) {
+            setState(() {
+              _googleEvents.removeWhere((e) => e.id == id);
+            });
+            ShadToast.show(
+              context,
+              title: 'Google Event Deleted',
+              description: 'The event has been deleted from Google Calendar.',
+              icon: Icons.delete_outline,
+            );
+          } else {
+            ShadToast.show(
+              context,
+              title: 'Deletion Failed',
+              description: 'Failed to delete event from Google Calendar.',
+              isDestructive: true,
+            );
+          }
+        } else {
+          setState(() {
+            _events.removeWhere((e) => e.id == id);
+          });
+          _saveEvents();
+          ShadToast.show(
+            context,
+            title: 'Event Deleted',
+            description: 'The event was deleted from your local calendar.',
+            icon: Icons.delete_outline,
+          );
+        }
       }
     }
   }
@@ -278,15 +496,12 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
           Expanded(
             child: Row(
               children: [
-                // Left Sidebar Panel: Agenda & Upcoming Timeline
                 CalendarSidebar(
                   selectedDate: _selectedDate,
                   eventsForSelectedDate: _eventsForSelectedDate,
                   allEvents: _filteredEvents,
                   onEventSelected: _handleEventSelected,
                 ),
-
-                // Main Workspace Panel (Expanded to fill middle space)
                 Expanded(
                   child: CalendarWorkspace(
                     currentDate: _selectedDate,
@@ -299,8 +514,6 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                     onAddEventForDate: _handleNewEventPressed,
                   ),
                 ),
-
-                // Right Sidebar Panel: Searches, Filters, Theme Toggles
                 CalendarRightSidebar(
                   activeCategories: _activeCategories,
                   onCategoryToggled: _handleCategoryToggled,
@@ -308,6 +521,12 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                   onNewEventPressed: () => _handleNewEventPressed(),
                   onToggleTheme: widget.onToggleTheme,
                   isDark: widget.isDark,
+                  isGoogleAuthenticated: _googleService.isAuthenticated,
+                  googleUserName: _googleService.userName,
+                  googleUserPicture: _googleService.userPicture,
+                  onGoogleLogin: _handleGoogleLogin,
+                  onGoogleLogout: _handleGoogleLogout,
+                  onGoogleRefresh: _handleGoogleRefresh,
                 ),
               ],
             ),

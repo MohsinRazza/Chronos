@@ -4,21 +4,25 @@ import '../models/event.dart';
 import 'shad_button.dart';
 import 'shad_input.dart';
 import 'shad_dialog.dart';
+import 'shad_toast.dart';
 
 class EventFormDialog extends StatefulWidget {
   final CalendarEvent? initialEvent;
   final DateTime initialDate;
+  final bool isGoogleAuthenticated;
 
   const EventFormDialog({
     super.key,
     this.initialEvent,
     required this.initialDate,
+    required this.isGoogleAuthenticated,
   });
 
   static Future<Map<String, dynamic>?> show({
     required BuildContext context,
     CalendarEvent? initialEvent,
     required DateTime initialDate,
+    required bool isGoogleAuthenticated,
   }) {
     return ShadDialog.show<Map<String, dynamic>>(
       context: context,
@@ -31,6 +35,7 @@ class EventFormDialog extends StatefulWidget {
       content: EventFormDialog(
         initialEvent: initialEvent,
         initialDate: initialDate,
+        isGoogleAuthenticated: isGoogleAuthenticated,
       ),
     );
   }
@@ -47,6 +52,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
   late String _selectedCategory;
+  late bool _syncToGoogle;
 
   final List<String> _categories = ['Work', 'Personal', 'Health', 'Education', 'Finance', 'Travel'];
 
@@ -61,6 +67,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
     _startTime = event?.startTime ?? const TimeOfDay(hour: 9, minute: 0);
     _endTime = event?.endTime ?? const TimeOfDay(hour: 10, minute: 0);
     _selectedCategory = event?.category ?? 'Work';
+    _syncToGoogle = event?.id.startsWith('google_') ?? widget.isGoogleAuthenticated;
   }
 
   @override
@@ -140,11 +147,11 @@ class _EventFormDialogState extends State<EventFormDialog> {
 
   void _save() {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter an event title'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      ShadToast.show(
+        context,
+        title: 'Title Required',
+        description: 'Please enter a title for your calendar event.',
+        isDestructive: true,
       );
       return;
     }
@@ -152,17 +159,18 @@ class _EventFormDialogState extends State<EventFormDialog> {
     final startMinutes = _startTime.hour * 60 + _startTime.minute;
     final endMinutes = _endTime.hour * 60 + _endTime.minute;
     if (endMinutes <= startMinutes) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('End time must be after start time'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      ShadToast.show(
+        context,
+        title: 'Invalid Event Duration',
+        description: 'End time must be set after the start time.',
+        isDestructive: true,
       );
       return;
     }
 
     Navigator.of(context).pop({
       'action': 'save',
+      'syncToGoogle': _syncToGoogle,
       'event': CalendarEvent(
         id: widget.initialEvent?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -365,6 +373,36 @@ class _EventFormDialogState extends State<EventFormDialog> {
               );
             }).toList(),
           ),
+
+          if (widget.isGoogleAuthenticated && (widget.initialEvent == null || !widget.initialEvent!.id.startsWith('google_'))) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _syncToGoogle,
+                    activeColor: shadTheme.primary,
+                    onChanged: (val) {
+                      setState(() {
+                        _syncToGoogle = val ?? false;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Sync to Google Calendar',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: shadTheme.foreground,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ],
 
           const SizedBox(height: 28),
           Divider(height: 1, color: shadTheme.border),

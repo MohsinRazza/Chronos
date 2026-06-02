@@ -12,6 +12,14 @@ class CalendarRightSidebar extends StatelessWidget {
   final VoidCallback onToggleTheme;
   final bool isDark;
 
+  // Google authentication properties
+  final bool isGoogleAuthenticated;
+  final String? googleUserName;
+  final String? googleUserPicture;
+  final VoidCallback onGoogleLogin;
+  final VoidCallback onGoogleLogout;
+  final VoidCallback onGoogleRefresh;
+
   const CalendarRightSidebar({
     super.key,
     required this.activeCategories,
@@ -20,6 +28,12 @@ class CalendarRightSidebar extends StatelessWidget {
     required this.onNewEventPressed,
     required this.onToggleTheme,
     required this.isDark,
+    required this.isGoogleAuthenticated,
+    required this.googleUserName,
+    required this.googleUserPicture,
+    required this.onGoogleLogin,
+    required this.onGoogleLogout,
+    required this.onGoogleRefresh,
   });
 
   @override
@@ -49,7 +63,66 @@ class CalendarRightSidebar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Theme Toggle Button (with support for future header action buttons)
+                if (isGoogleAuthenticated) ...[
+                  // Sync/Refresh Button
+                  Tooltip(
+                    message: 'Refresh Google Calendar',
+                    child: ShadButton.icon(
+                      onPressed: onGoogleRefresh,
+                      variant: ShadButtonVariant.ghost,
+                      icon: Icons.sync,
+                      iconSize: 18,
+                      child: const Text('Refresh'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Google Avatar Button
+                  Tooltip(
+                    message: 'Connected as ${googleUserName ?? "Google User"}\nClick to Sign Out',
+                    child: GestureDetector(
+                      onTap: onGoogleLogout,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: shadTheme.border, width: 1.5),
+                        ),
+                        child: ClipOval(
+                          child: googleUserPicture != null && googleUserPicture!.isNotEmpty
+                              ? Image.network(
+                                  googleUserPicture!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Icon(
+                                    Icons.person,
+                                    size: 16,
+                                    color: shadTheme.foreground,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.person,
+                                  size: 16,
+                                  color: shadTheme.foreground,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  // Connect Google Account Button
+                  Tooltip(
+                    message: 'Connect Google Account',
+                    child: ShadButton.icon(
+                      onPressed: onGoogleLogin,
+                      variant: ShadButtonVariant.outline,
+                      icon: Icons.login_outlined,
+                      iconSize: 18,
+                      child: const Text('Connect Google'),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 8),
+                // Theme Toggle Button
                 ShadButton.icon(
                   onPressed: onToggleTheme,
                   variant: ShadButtonVariant.outline,
