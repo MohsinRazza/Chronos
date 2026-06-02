@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,6 +108,10 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
   // Google Calendar Integration
   final GoogleCalendarService _googleService = GoogleCalendarService();
   List<CalendarEvent> _googleEvents = [];
+  bool _isOnline = true;
+  DateTime? _lastSyncTime;
+  DateTime? _googleLoginTime;
+  Timer? _connectivityTimer;
 
   @override
   void initState() {
@@ -121,12 +127,21 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
       if (mounted) {
         setState(() {});
         if (_googleService.isAuthenticated) {
+          final prefs = await SharedPreferences.getInstance();
+          final String? lastSyncTimeStr = prefs.getString('google_last_sync_time');
+          final String? loginTimeStr = prefs.getString('google_login_time');
+          setState(() {
+            _lastSyncTime = lastSyncTimeStr != null ? DateTime.parse(lastSyncTimeStr) : null;
+            _googleLoginTime = loginTimeStr != null ? DateTime.parse(loginTimeStr) : null;
+          });
           _fetchGoogleEvents();
         } else {
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove('cached_google_events');
           setState(() {
             _googleEvents = [];
+            _lastSyncTime = null;
+            _googleLoginTime = null;
           });
         }
       }
@@ -134,20 +149,41 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
 
     _loadEvents();
     _googleService.initialize();
+    _checkConnectivity();
+    _connectivityTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _checkConnectivity();
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivityTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchGoogleEvents() async {
     try {
       final gEvents = await _googleService.fetchGoogleEvents();
+      final now = DateTime.now();
       if (mounted) {
         setState(() {
           _googleEvents = gEvents;
+          _lastSyncTime = now;
+          _isOnline = true;
         });
       }
       await _saveCachedGoogleEvents();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('google_last_sync_time', now.toIso8601String());
     } catch (e) {
       debugPrint('Error fetching Google events: $e');
       if (mounted) {
+        setState(() {
+          _isOnline = false;
+        });
         ShadToast.show(
           context,
           title: 'Sync Failed',
@@ -198,6 +234,22 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
         debugPrint('Error loading cached Google events: $e');
       }
     }
+
+    // Load last sync time
+    final String? lastSyncTimeStr = prefs.getString('google_last_sync_time');
+    if (lastSyncTimeStr != null) {
+      setState(() {
+        _lastSyncTime = DateTime.parse(lastSyncTimeStr);
+      });
+    }
+    
+    // Load google login time
+    final String? loginTimeStr = prefs.getString('google_login_time');
+    if (loginTimeStr != null) {
+      setState(() {
+        _googleLoginTime = DateTime.parse(loginTimeStr);
+      });
+    }
   }
 
   Future<void> _saveEvents() async {
@@ -210,6 +262,24 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = json.encode(_googleEvents.map((e) => e.toJson()).toList());
     await prefs.setString('cached_google_events', encoded);
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 3));
+      final online = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      if (mounted && online != _isOnline) {
+        setState(() {
+          _isOnline = online;
+        });
+      }
+    } catch (_) {
+      if (mounted && _isOnline) {
+        setState(() {
+          _isOnline = false;
+        });
+      }
+    }
   }
 
   // Filter events based on active category checkboxes and search bar queries
@@ -556,6 +626,9 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                   onGoogleLogin: _handleGoogleLogin,
                   onGoogleLogout: _handleGoogleLogout,
                   onGoogleRefresh: _handleGoogleRefresh,
+                  isOnline: _isOnline,
+                  lastSyncTime: _lastSyncTime,
+                  googleLoginTime: _googleLoginTime,
                 ),
               ],
             ),
