@@ -381,14 +381,14 @@ class _MonthGridCellState extends State<_MonthGridCell> {
       onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
+        child: Container(
           decoration: BoxDecoration(
             color: widget.isSelected
-                ? shadTheme.accent.withOpacity(0.4)
-                : (_isHovered ? shadTheme.accent.withOpacity(0.2) : Colors.transparent),
+                ? shadTheme.accent.withOpacity(0.8)
+                : (_isHovered ? shadTheme.accent.withOpacity(0.45) : Colors.transparent),
             border: Border.all(
               color: shadTheme.border,
               width: 0.5,

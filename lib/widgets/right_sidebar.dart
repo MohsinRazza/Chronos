@@ -38,25 +38,26 @@ class CalendarRightSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Search & Tools Title Header Section
+          // Header Section with Actions
           Container(
             height: 68.0,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: shadTheme.border, width: 1)),
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Search & Filter',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: shadTheme.foreground,
-                  letterSpacing: 0.5,
-                  fontFamily: 'Inter',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Theme Toggle Button (with support for future header action buttons)
+                ShadButton.icon(
+                  onPressed: onToggleTheme,
+                  variant: ShadButtonVariant.outline,
+                  icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  iconSize: 18,
+                  child: const Text('Toggle Theme'),
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -180,32 +181,7 @@ class CalendarRightSidebar extends StatelessWidget {
             ),
           ),
 
-          const Spacer(),
 
-          // Footer
-          Divider(height: 1, color: shadTheme.border),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'v1.0.0',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: shadTheme.mutedForeground,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-                ShadButton.icon(
-                  onPressed: onToggleTheme,
-                  icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                  iconSize: 18,
-                  child: const Text('Toggle Theme'),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

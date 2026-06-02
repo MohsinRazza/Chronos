@@ -443,30 +443,38 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = Center(child: widget.icon);
-    
-    // Switch icon color on hover if hoverIconColor is provided
-    if (_isHovered && widget.hoverIconColor != null && widget.icon is Icon) {
-      child = Center(
-        child: Icon(
-          (widget.icon as Icon).icon,
-          size: (widget.icon as Icon).size,
-          color: widget.hoverIconColor,
-        ),
-      );
+    Color? iconColor;
+    IconData? iconData;
+    double? iconSize;
+
+    if (widget.icon is Icon) {
+      final iconWidget = widget.icon as Icon;
+      iconData = iconWidget.icon;
+      iconSize = iconWidget.size;
+      iconColor = _isHovered 
+          ? (widget.hoverIconColor ?? iconWidget.color) 
+          : iconWidget.color;
     }
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onPressed,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
+        child: Container(
           width: 48,
           height: 40,
           color: _isHovered ? widget.hoverColor : Colors.transparent,
-          child: child,
+          child: Center(
+            child: iconData != null
+                ? Icon(
+                    iconData,
+                    size: iconSize,
+                    color: iconColor,
+                  )
+                : widget.icon,
+          ),
         ),
       ),
     );
