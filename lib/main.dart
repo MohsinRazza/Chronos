@@ -648,7 +648,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                     onAddEventForDate: _handleNewEventPressed,
                   ),
                 ),
-                CalendarRightSidebar(
+                 CalendarRightSidebar(
                   activeCategories: _activeCategories,
                   onCategoryToggled: _handleCategoryToggled,
                   onSearchChanged: _handleSearchChanged,
@@ -657,6 +657,9 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
                   isDark: widget.isDark,
                   themePreset: widget.themePreset,
                   onThemePresetChanged: widget.onThemePresetChanged,
+                  selectedDate: _selectedDate,
+                  onDateSelected: _handleDateSelected,
+                  events: _events,
                   isGoogleAuthenticated: _googleService.isAuthenticated,
                   googleUserName: _googleService.userName,
                   googleUserPicture: _googleService.userPicture,

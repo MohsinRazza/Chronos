@@ -14,6 +14,9 @@ class CalendarRightSidebar extends StatefulWidget {
   final bool isDark;
   final String themePreset;
   final ValueChanged<String> onThemePresetChanged;
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  final List<CalendarEvent> events;
 
   // Google authentication properties
   final bool isGoogleAuthenticated;
@@ -38,6 +41,9 @@ class CalendarRightSidebar extends StatefulWidget {
     required this.isDark,
     required this.themePreset,
     required this.onThemePresetChanged,
+    required this.selectedDate,
+    required this.onDateSelected,
+    required this.events,
     required this.isGoogleAuthenticated,
     required this.googleUserName,
     required this.googleUserPicture,
@@ -55,15 +61,26 @@ class CalendarRightSidebar extends StatefulWidget {
 
 class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
   Timer? _relativeTimeUpdateTimer;
+  late DateTime _currentMonth;
 
   @override
   void initState() {
     super.initState();
+    _currentMonth = DateTime(widget.selectedDate.year, widget.selectedDate.month, 1);
     _relativeTimeUpdateTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) {
         setState(() {});
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant CalendarRightSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate.year != widget.selectedDate.year ||
+        oldWidget.selectedDate.month != widget.selectedDate.month) {
+      _currentMonth = DateTime(widget.selectedDate.year, widget.selectedDate.month, 1);
+    }
   }
 
   @override
@@ -235,158 +252,175 @@ class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
 
-          // Search Field
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ShadInput(
-              placeholder: 'Search events...',
-              prefixIcon: Icons.search,
-              onChanged: onSearchChanged,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-          Divider(height: 1, color: shadTheme.border),
-          const SizedBox(height: 16),
-
-          // Actions
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Text(
-              'Actions',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: shadTheme.mutedForeground,
-                letterSpacing: 0.5,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ShadButton.standard(
-              onPressed: onNewEventPressed,
-              icon: Icons.add,
-              child: const Text('Add Event'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ShadButton.secondary(
-              onPressed: isGoogleAuthenticated ? onGoogleRefresh : onGoogleLogin,
-              icon: Icons.sync,
-              child: Text(isGoogleAuthenticated ? 'Sync Calendar' : 'Connect Calendar'),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-          Divider(height: 1, color: shadTheme.border),
-          const SizedBox(height: 20),
-
-          // Categories Selection List
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: shadTheme.mutedForeground,
-                    letterSpacing: 0.5,
-                    fontFamily: 'Poppins',
+                  // Search Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ShadInput(
+                      placeholder: 'Search events...',
+                      prefixIcon: Icons.search,
+                      onChanged: onSearchChanged,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ...categories.map((category) {
-                  final isChecked = activeCategories.contains(category);
-                  final categoryColor = CalendarEvent.getColorForCategory(category);
-                  
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: () => onCategoryToggled(category, !isChecked),
-                        child: Row(
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: isChecked ? shadTheme.primary : Colors.transparent,
-                                border: Border.all(
-                                  color: isChecked ? shadTheme.primary : shadTheme.border,
-                                  width: 1.5,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: isChecked
-                                  ? Icon(
-                                      Icons.check,
-                                      size: 10,
-                                      color: shadTheme.primaryForeground,
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: categoryColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              category,
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w400,
-                                  color: shadTheme.foreground,
-                                  fontFamily: 'Poppins'),
-                            ),
-                          ],
-                        ),
+
+                  const SizedBox(height: 16),
+                  Divider(height: 1, color: shadTheme.border),
+                  const SizedBox(height: 16),
+
+                  // Actions
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: Text(
+                      'Actions',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: shadTheme.mutedForeground,
+                        letterSpacing: 0.5,
+                        fontFamily: 'Poppins',
                       ),
                     ),
-                  );
-                }).toList(),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-          Divider(height: 1, color: shadTheme.border),
-          const SizedBox(height: 20),
-
-          // Themes Selection List
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Themes',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: shadTheme.mutedForeground,
-                    letterSpacing: 0.5,
-                    fontFamily: 'Poppins',
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildThemePresetSelector(context, shadTheme),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ShadButton.standard(
+                      onPressed: onNewEventPressed,
+                      icon: Icons.add,
+                      child: const Text('Add Event'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ShadButton.secondary(
+                      onPressed: isGoogleAuthenticated ? onGoogleRefresh : onGoogleLogin,
+                      icon: Icons.sync,
+                      child: Text(isGoogleAuthenticated ? 'Sync Calendar' : 'Connect Calendar'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Divider(height: 1, color: shadTheme.border),
+                  const SizedBox(height: 20),
+
+                  // Minified Calendar
+                  _buildMinifiedCalendar(context, shadTheme),
+
+                  const SizedBox(height: 20),
+                  Divider(height: 1, color: shadTheme.border),
+                  const SizedBox(height: 20),
+
+                  // Categories Selection List
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Categories',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: shadTheme.mutedForeground,
+                            letterSpacing: 0.5,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...categories.map((category) {
+                          final isChecked = activeCategories.contains(category);
+                          final categoryColor = CalendarEvent.getColorForCategory(category);
+                          
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => onCategoryToggled(category, !isChecked),
+                                child: Row(
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      width: 16,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: isChecked ? shadTheme.primary : Colors.transparent,
+                                        border: Border.all(
+                                          color: isChecked ? shadTheme.primary : shadTheme.border,
+                                          width: 1.5,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: isChecked
+                                          ? Icon(
+                                              Icons.check,
+                                              size: 10,
+                                              color: shadTheme.primaryForeground,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: categoryColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      category,
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: shadTheme.foreground,
+                                          fontFamily: 'Poppins'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Divider(height: 1, color: shadTheme.border),
+                  const SizedBox(height: 20),
+
+                  // Themes Selection List
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Themes',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: shadTheme.mutedForeground,
+                            letterSpacing: 0.5,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildThemePresetSelector(context, shadTheme),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -536,6 +570,191 @@ class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  List<DateTime> _generateDaysInMonth(DateTime month) {
+    final firstDayOfMonth = DateTime(month.year, month.month, 1);
+    final dayOfWeek = firstDayOfMonth.weekday; // 1 = Monday, 7 = Sunday
+    
+    // Calculate how many days of the previous month we need to show
+    final int prevMonthDaysToOffset = dayOfWeek == 7 ? 0 : dayOfWeek; 
+    
+    // Start date of the grid
+    final gridStartDate = firstDayOfMonth.subtract(Duration(days: prevMonthDaysToOffset));
+    
+    // Generates 42 days (6 weeks) to cover any month's grid layout
+    return List.generate(42, (index) => gridStartDate.add(Duration(days: index)));
+  }
+
+  Widget _buildMinifiedCalendar(BuildContext context, ShadTheme shadTheme) {
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    final days = _generateDaysInMonth(_currentMonth);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Month Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${months[_currentMonth.month - 1]} ${_currentMonth.year}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: shadTheme.foreground,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.chevron_left, size: 16, color: shadTheme.mutedForeground),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      setState(() {
+                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: Icon(Icons.chevron_right, size: 16, color: shadTheme.mutedForeground),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      setState(() {
+                        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Days of Week Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) {
+              return SizedBox(
+                width: 28,
+                child: Center(
+                  child: Text(
+                    day,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: shadTheme.mutedForeground,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 6),
+          
+          // Days Grid (6 rows * 7 days = 42 days)
+          Column(
+            children: List.generate(6, (weekIndex) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(7, (dayIndex) {
+                    final day = days[weekIndex * 7 + dayIndex];
+                    final isCurrentMonth = day.month == _currentMonth.month;
+                    final isSelected = day.year == widget.selectedDate.year &&
+                        day.month == widget.selectedDate.month &&
+                        day.day == widget.selectedDate.day;
+                    
+                    final now = DateTime.now();
+                    final isToday = day.year == now.year &&
+                        day.month == now.month &&
+                        day.day == now.day;
+                        
+                    final hasEvents = widget.events.any((e) =>
+                        e.date.year == day.year &&
+                        e.date.month == day.month &&
+                        e.date.day == day.day);
+                    
+                    final dayEvents = widget.events.where((e) =>
+                        e.date.year == day.year &&
+                        e.date.month == day.month &&
+                        e.date.day == day.day).toList();
+
+                    return MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          widget.onDateSelected(day);
+                        },
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: isSelected ? shadTheme.primary : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: isToday && !isSelected
+                                ? Border.all(color: shadTheme.primary.withOpacity(0.5), width: 1.5)
+                                : null,
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSelected || isToday ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected
+                                      ? shadTheme.primaryForeground
+                                      : (isCurrentMonth
+                                          ? shadTheme.foreground
+                                          : shadTheme.mutedForeground.withOpacity(0.4)),
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                              if (hasEvents && !isSelected)
+                                Positioned(
+                                  bottom: 2,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: dayEvents.take(3).map((e) {
+                                      return Container(
+                                        width: 3.5,
+                                        height: 3.5,
+                                        margin: const EdgeInsets.symmetric(horizontal: 0.5),
+                                        decoration: BoxDecoration(
+                                          color: e.color,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }
