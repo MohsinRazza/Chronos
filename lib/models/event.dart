@@ -150,4 +150,38 @@ class CalendarEvent {
       ),
     ];
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'date': date.toIso8601String(),
+      'start_hour': startTime.hour,
+      'start_minute': startTime.minute,
+      'end_hour': endTime.hour,
+      'end_minute': endTime.minute,
+      'category': category,
+      'color': color.value,
+    };
+  }
+
+  factory CalendarEvent.fromJson(Map<String, dynamic> json) {
+    return CalendarEvent(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      date: DateTime.parse(json['date'] as String),
+      startTime: TimeOfDay(
+        hour: json['start_hour'] as int,
+        minute: json['start_minute'] as int,
+      ),
+      endTime: TimeOfDay(
+        hour: json['end_hour'] as int,
+        minute: json['end_minute'] as int,
+      ),
+      category: json['category'] as String,
+      color: Color(json['color'] as int),
+    );
+  }
 }

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/shadcn_theme.dart';
 import 'models/event.dart';
 import 'widgets/sidebar.dart';
@@ -39,6 +41,24 @@ class _MyAppState extends State<MyApp> {
   bool _isDark = false; // Default theme is Light!
 
   @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDark = prefs.getBool('is_dark') ?? false;
+    });
+  }
+
+  Future<void> _saveTheme(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_dark', value);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final shadTheme = ShadTheme(isDark: _isDark);
 
@@ -53,6 +73,7 @@ class _MyAppState extends State<MyApp> {
           setState(() {
             _isDark = !_isDark;
           });
+          _saveTheme(_isDark);
         },
       ),
     );
@@ -85,9 +106,41 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
     super.initState();
     _selectedDate = DateTime.now();
     _viewMode = CalendarViewMode.month;
-    _events = CalendarEvent.getMockEvents();
+    _events = [];
     _activeCategories = {'Work', 'Personal', 'Health', 'Education', 'Finance', 'Travel'};
     _searchKeyword = '';
+    _loadEvents();
+  }
+
+  Future<void> _loadEvents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? eventsJson = prefs.getString('calendar_events');
+    if (eventsJson != null) {
+      try {
+        final List<dynamic> decoded = json.decode(eventsJson);
+        setState(() {
+          _events = decoded
+              .map((item) => CalendarEvent.fromJson(item as Map<String, dynamic>))
+              .toList();
+        });
+      } catch (e) {
+        setState(() {
+          _events = CalendarEvent.getMockEvents();
+        });
+        _saveEvents();
+      }
+    } else {
+      setState(() {
+        _events = CalendarEvent.getMockEvents();
+      });
+      _saveEvents();
+    }
+  }
+
+  Future<void> _saveEvents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = json.encode(_events.map((e) => e.toJson()).toList());
+    await prefs.setString('calendar_events', encoded);
   }
 
   // Filter events based on active category checkboxes and search bar queries
@@ -142,6 +195,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
       setState(() {
         _events.add(result['event'] as CalendarEvent);
       });
+      _saveEvents();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Event added successfully!'),
@@ -169,6 +223,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
             _events[index] = updatedEvent;
           }
         });
+        _saveEvents();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Event updated successfully!'),
@@ -181,6 +236,7 @@ class _CalendarDashboardState extends State<CalendarDashboard> {
         setState(() {
           _events.removeWhere((e) => e.id == id);
         });
+        _saveEvents();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Event deleted.'),
