@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ShadColors {
   // Zinc Light Palette
@@ -138,10 +139,9 @@ class ShadTheme {
         outline: border,
         outlineVariant: border,
       ),
-      textTheme: base.textTheme.apply(
+      textTheme: GoogleFonts.poppinsTextTheme(base.textTheme).apply(
         bodyColor: foreground,
         displayColor: foreground,
-        fontFamily: 'Inter',
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(

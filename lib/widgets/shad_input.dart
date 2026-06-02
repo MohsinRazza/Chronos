@@ -70,7 +70,7 @@ class _ShadInputState extends State<ShadInput> {
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: shadTheme.foreground,
-              fontFamily: 'Inter',
+              fontFamily: 'Poppins',
             ),
           ),
           const SizedBox(height: 6),
@@ -114,14 +114,14 @@ class _ShadInputState extends State<ShadInput> {
                   style: TextStyle(
                     fontSize: 14,
                     color: shadTheme.foreground,
-                    fontFamily: 'Inter',
+                    fontFamily: 'Poppins',
                   ),
                   decoration: InputDecoration(
                     hintText: widget.placeholder,
                     hintStyle: TextStyle(
                       color: shadTheme.mutedForeground,
                       fontSize: 14,
-                      fontFamily: 'Inter',
+                      fontFamily: 'Poppins',
                     ),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -147,7 +147,7 @@ class _ShadInputState extends State<ShadInput> {
             style: TextStyle(
               fontSize: 12,
               color: shadTheme.mutedForeground,
-              fontFamily: 'Inter',
+              fontFamily: 'Poppins',
             ),
           ),
         ],

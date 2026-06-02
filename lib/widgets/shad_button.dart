@@ -176,7 +176,7 @@ class _ShadButtonState extends State<ShadButton> {
               color: foregroundColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              fontFamily: 'Inter',
+              fontFamily: 'Poppins',
             ),
             child: widget.child,
           ),

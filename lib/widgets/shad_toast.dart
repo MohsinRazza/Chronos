@@ -168,7 +168,7 @@ class _ShadToastWidgetState extends State<_ShadToastWidget> with SingleTickerPro
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: textColor,
-                          fontFamily: 'Inter',
+                          fontFamily: 'Poppins',
                         ),
                       ),
                       if (widget.description != null) ...[
@@ -178,7 +178,7 @@ class _ShadToastWidgetState extends State<_ShadToastWidget> with SingleTickerPro
                           style: TextStyle(
                             fontSize: 12,
                             color: descriptionColor,
-                            fontFamily: 'Inter',
+                            fontFamily: 'Poppins',
                             height: 1.35,
                           ),
                         ),

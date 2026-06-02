@@ -746,7 +746,7 @@ class _CustomWindowTitleBarState extends State<CustomWindowTitleBar> with Window
                     Text(
                       'Chronos',
                       style: TextStyle(
-                        fontFamily: 'Inter',
+                        fontFamily: 'Poppins',
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: shadTheme.foreground,

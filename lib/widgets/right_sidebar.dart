@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../theme/shadcn_theme.dart';
 import '../models/event.dart';
 import 'shad_button.dart';
 import 'shad_input.dart';
 
-class CalendarRightSidebar extends StatelessWidget {
+class CalendarRightSidebar extends StatefulWidget {
   final Set<String> activeCategories;
   final Function(String, bool) onCategoryToggled;
   final Function(String) onSearchChanged;
@@ -43,6 +44,45 @@ class CalendarRightSidebar extends StatelessWidget {
     required this.lastSyncTime,
     required this.googleLoginTime,
   });
+
+  @override
+  State<CalendarRightSidebar> createState() => _CalendarRightSidebarState();
+}
+
+class _CalendarRightSidebarState extends State<CalendarRightSidebar> {
+  Timer? _relativeTimeUpdateTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _relativeTimeUpdateTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _relativeTimeUpdateTimer?.cancel();
+    super.dispose();
+  }
+
+  Set<String> get activeCategories => widget.activeCategories;
+  Function(String, bool) get onCategoryToggled => widget.onCategoryToggled;
+  Function(String) get onSearchChanged => widget.onSearchChanged;
+  VoidCallback get onNewEventPressed => widget.onNewEventPressed;
+  VoidCallback get onToggleTheme => widget.onToggleTheme;
+  bool get isDark => widget.isDark;
+  bool get isGoogleAuthenticated => widget.isGoogleAuthenticated;
+  String? get googleUserName => widget.googleUserName;
+  String? get googleUserPicture => widget.googleUserPicture;
+  VoidCallback get onGoogleLogin => widget.onGoogleLogin;
+  VoidCallback get onGoogleLogout => widget.onGoogleLogout;
+  VoidCallback get onGoogleRefresh => widget.onGoogleRefresh;
+  bool get isOnline => widget.isOnline;
+  DateTime? get lastSyncTime => widget.lastSyncTime;
+  DateTime? get googleLoginTime => widget.googleLoginTime;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +167,7 @@ class CalendarRightSidebar extends StatelessWidget {
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                       color: shadTheme.foreground,
-                                      fontFamily: 'Inter',
+                                      fontFamily: 'Poppins',
                                     ),
                                   ),
                                 ),
@@ -169,7 +209,7 @@ class CalendarRightSidebar extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Inter',
+                                fontFamily: 'Poppins',
                               ),
                             ),
                           ],
@@ -217,7 +257,7 @@ class CalendarRightSidebar extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: shadTheme.mutedForeground,
                 letterSpacing: 0.5,
-                fontFamily: 'Inter',
+                fontFamily: 'Poppins',
               ),
             ),
           ),
@@ -256,7 +296,7 @@ class CalendarRightSidebar extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: shadTheme.mutedForeground,
                     letterSpacing: 0.5,
-                    fontFamily: 'Inter',
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -308,7 +348,7 @@ class CalendarRightSidebar extends StatelessWidget {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w400,
                                   color: shadTheme.foreground,
-                                  fontFamily: 'Inter'),
+                                  fontFamily: 'Poppins'),
                             ),
                           ],
                         ),
@@ -384,7 +424,7 @@ class CalendarRightSidebar extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: shadTheme.mutedForeground,
-                fontFamily: 'Inter',
+                fontFamily: 'Poppins',
               ),
             ),
           ],

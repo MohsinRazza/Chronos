@@ -82,7 +82,7 @@ class CalendarSidebar extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: shadTheme.foreground,
                     letterSpacing: 0.5,
-                    fontFamily: 'Inter',
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 Text(
@@ -91,7 +91,7 @@ class CalendarSidebar extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: shadTheme.mutedForeground,
-                    fontFamily: 'Inter',
+                    fontFamily: 'Poppins',
                   ),
                 ),
               ],
@@ -99,15 +99,19 @@ class CalendarSidebar extends StatelessWidget {
           ),
 
           // SECTION 1: Agenda of Selected Day
-          Expanded(
+          Flexible(
+            fit: FlexFit.loose,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: eventsForSelectedDate.isEmpty
-                        ? Center(
+                        ? SizedBox(
+                            height: 100,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -123,13 +127,14 @@ class CalendarSidebar extends StatelessWidget {
                                     fontSize: 12,
                                     color: shadTheme.mutedForeground,
                                     fontStyle: FontStyle.italic,
-                                    fontFamily: 'Inter',
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],
                             ),
                           )
                         : ListView.builder(
+                            shrinkWrap: true,
                             itemCount: eventsForSelectedDate.length,
                             itemBuilder: (context, index) {
                               final event = eventsForSelectedDate[index];
@@ -170,7 +175,7 @@ class CalendarSidebar extends StatelessWidget {
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.w500,
                                                     color: shadTheme.foreground,
-                                                    fontFamily: 'Inter',
+                                                    fontFamily: 'Poppins',
                                                   ),
                                                 ),
                                               ),
@@ -182,7 +187,7 @@ class CalendarSidebar extends StatelessWidget {
                                             style: TextStyle(
                                               fontSize: 11,
                                               color: shadTheme.mutedForeground,
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Poppins',
                                             ),
                                           ),
                                         ],
@@ -215,7 +220,7 @@ class CalendarSidebar extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: shadTheme.mutedForeground,
                       letterSpacing: 0.5,
-                      fontFamily: 'Inter',
+                      fontFamily: 'Poppins',
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -237,7 +242,7 @@ class CalendarSidebar extends StatelessWidget {
                                     fontSize: 12,
                                     color: shadTheme.mutedForeground,
                                     fontStyle: FontStyle.italic,
-                                    fontFamily: 'Inter',
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],
@@ -265,7 +270,7 @@ class CalendarSidebar extends StatelessWidget {
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
                                               color: shadTheme.foreground,
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Poppins',
                                             ),
                                           ),
                                           Text(
@@ -274,7 +279,7 @@ class CalendarSidebar extends StatelessWidget {
                                               fontSize: 10,
                                               fontWeight: FontWeight.w500,
                                               color: shadTheme.mutedForeground,
-                                              fontFamily: 'Inter',
+                                              fontFamily: 'Poppins',
                                             ),
                                           ),
                                         ],
@@ -336,7 +341,7 @@ class CalendarSidebar extends StatelessWidget {
                                                       fontSize: 12,
                                                       fontWeight: FontWeight.w600,
                                                       color: shadTheme.foreground,
-                                                      fontFamily: 'Inter',
+                                                      fontFamily: 'Poppins',
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
@@ -346,7 +351,7 @@ class CalendarSidebar extends StatelessWidget {
                                                       fontSize: 10,
                                                       color: shadTheme.mutedForeground,
                                                       fontWeight: FontWeight.w500,
-                                                      fontFamily: 'Inter',
+                                                      fontFamily: 'Poppins',
                                                     ),
                                                   ),
                                                 ],

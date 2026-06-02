@@ -100,7 +100,7 @@ class ShadDialog extends StatelessWidget {
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: shadTheme.foreground,
-                          fontFamily: 'Inter',
+                          fontFamily: 'Poppins',
                         ),
                       ),
                       if (description != null) ...[
@@ -110,7 +110,7 @@ class ShadDialog extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             color: shadTheme.mutedForeground,
-                            fontFamily: 'Inter',
+                            fontFamily: 'Poppins',
                           ),
                         ),
                       ],
